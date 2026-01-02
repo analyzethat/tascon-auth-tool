@@ -1,0 +1,26 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{template "title" .}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar-brand">
+            <h1>Power BI Access Management</h1>
+        </div>
+        <nav class="navbar-nav">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/settings" class="nav-link">Instellingen</a>
+        </nav>
+    </header>
+    <main class="container">
+        {{template "content" .}}
+    </main>
+    {{template "scripts" .}}
+</body>
+</html>
+{{end}}

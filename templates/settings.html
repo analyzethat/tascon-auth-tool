@@ -1,0 +1,34 @@
+{{define "title"}}Instellingen - Power BI Access Management{{end}}
+
+{{define "content"}}
+<div class="settings-page">
+    <h2>Instellingen</h2>
+
+    {{if .Saved}}
+    <div class="alert alert-success">Instellingen opgeslagen. Herstart de applicatie om de nieuwe verbinding te gebruiken.</div>
+    {{end}}
+
+    <form method="POST" action="/settings" class="settings-form">
+        <div class="form-group">
+            <label for="server">Server</label>
+            <input type="text" id="server" name="server" class="input" value="{{.Server}}" placeholder="server.database.windows.net">
+            <small class="text-muted">De Azure SQL server hostnaam</small>
+        </div>
+
+        <div class="form-group">
+            <label for="database">Database</label>
+            <input type="text" id="database" name="database" class="input" value="{{.Database}}" placeholder="dwh">
+            <small class="text-muted">De naam van de database</small>
+        </div>
+
+        <div class="form-actions">
+            <a href="/" class="btn btn-secondary">Terug</a>
+            <button type="submit" class="btn btn-primary">Opslaan</button>
+        </div>
+    </form>
+</div>
+{{end}}
+
+{{define "scripts"}}{{end}}
+
+{{template "layout" .}}

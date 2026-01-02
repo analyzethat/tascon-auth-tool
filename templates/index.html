@@ -1,0 +1,108 @@
+{{define "title"}}Power BI Access Management{{end}}
+
+{{define "content"}}
+<div class="split-panel">
+    <!-- Left Panel: Users -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Gebruikers</h2>
+            <div class="panel-actions">
+                <input type="text" id="user-filter" placeholder="Filter..." class="input">
+                <select id="user-sort" class="input">
+                    <option value="email-asc">E-mail (A-Z)</option>
+                    <option value="email-desc">E-mail (Z-A)</option>
+                    <option value="id-asc">ID (oplopend)</option>
+                    <option value="id-desc">ID (aflopend)</option>
+                </select>
+                <button class="btn btn-primary" onclick="showAddUserModal()">Toevoegen</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div id="users-list" class="user-list"></div>
+        </div>
+    </div>
+
+    <!-- Right Panel: User Access -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Groepen voor: <span id="selected-user-name">-</span></h2>
+            <div class="panel-actions">
+                <button class="btn btn-primary" id="add-groups-btn" disabled onclick="showSearchModal()">Groepen toevoegen</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div id="access-list" class="access-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit User Modal -->
+<div class="modal" id="user-modal">
+    <div class="modal-overlay" onclick="hideUserModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="user-modal-title">Gebruiker toevoegen</h3>
+            <button class="modal-close" onclick="hideUserModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="user-modal-id">
+            <div class="form-group">
+                <label for="user-modal-email">E-mailadres</label>
+                <input type="email" id="user-modal-email" class="input" placeholder="gebruiker@voorbeeld.nl">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="hideUserModal()">Annuleren</button>
+            <button class="btn btn-primary" onclick="saveUser()">Opslaan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-overlay" onclick="hideDeleteModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Gebruiker verwijderen</h3>
+            <button class="modal-close" onclick="hideDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Weet je zeker dat je <strong id="delete-user-name"></strong> wilt verwijderen?</p>
+            <p class="text-muted">Alle groepsrechten van deze gebruiker worden ook verwijderd.</p>
+            <input type="hidden" id="delete-user-id">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="hideDeleteModal()">Annuleren</button>
+            <button class="btn btn-danger" onclick="confirmDeleteUser()">Verwijderen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Search Groups Modal -->
+<div class="modal" id="search-modal">
+    <div class="modal-overlay" onclick="hideSearchModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3>Groepen zoeken</h3>
+            <button class="modal-close" onclick="hideSearchModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <input type="text" id="group-search-input" class="input" placeholder="Zoek op naam...">
+                <button class="btn btn-primary" onclick="searchGroups()">Zoeken</button>
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="hideSearchModal()">Annuleren</button>
+            <button class="btn btn-primary" onclick="addSelectedGroups()">Toevoegen</button>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/app.js"></script>
+{{end}}
+
+{{template "layout" .}}

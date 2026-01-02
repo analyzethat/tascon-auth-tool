@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -23,24 +24,39 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	log.Printf("Connecting to database %s on %s...", cfg.Database, cfg.Server)
-	log.Println("Using Azure CLI authentication (run 'az login' first if not logged in)")
+	var database *sql.DB
 
-	// Connect to database (triggers MFA popup)
-	database, err := db.Open(db.Config{
-		Server:   cfg.Server,
-		Database: cfg.Database,
-	})
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+	// Only connect if credentials are configured
+	if cfg.Username != "" && cfg.Password != "" {
+		log.Printf("Connecting to database %s on %s...", cfg.Database, cfg.Server)
+
+		database, err = db.Open(db.Config{
+			Server:   cfg.Server,
+			Database: cfg.Database,
+			Username: cfg.Username,
+			Password: cfg.Password,
+		})
+		if err != nil {
+			log.Printf("Warning: Failed to connect to database: %v", err)
+			log.Println("Start the application and configure credentials in Settings")
+		} else {
+			defer database.Close()
+			log.Println("Connected to database successfully")
+		}
+	} else {
+		log.Println("No database credentials configured. Please configure in Settings.")
 	}
-	defer database.Close()
-	log.Println("Connected to database successfully")
 
-	// Setup repositories
-	userRepo := repository.NewUserRepository(database)
-	accessRepo := repository.NewAccessRepository(database)
-	groupRepo := repository.NewGroupRepository(database)
+	// Setup repositories (may be nil if no database connection)
+	var userRepo *repository.UserRepository
+	var accessRepo *repository.AccessRepository
+	var groupRepo *repository.GroupRepository
+
+	if database != nil {
+		userRepo = repository.NewUserRepository(database)
+		accessRepo = repository.NewAccessRepository(database)
+		groupRepo = repository.NewGroupRepository(database)
+	}
 
 	// Setup handlers
 	h, err := handlers.NewHandler(userRepo, accessRepo, groupRepo, cfg)

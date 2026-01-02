@@ -42,19 +42,22 @@ func (r *GroupRepository) Search(ctx context.Context, searchTerm string) ([]mode
 
 func (r *GroupRepository) searchInColumn(ctx context.Context, column string, pattern string) ([]models.SearchResult, error) {
 	// Using parameterized column name via switch to prevent SQL injection
+	// level2name and level3name are in dim.Object, joined via Group_Bkey
 	var query string
 	switch column {
 	case "level2name":
 		query = `
 			SELECT DISTINCT g.Group_Bkey, g.GroupName, 'level2name' as MatchedOn
 			FROM dim.[Group] g
-			WHERE g.level2name LIKE @p1
+			INNER JOIN dim.[Object] o ON g.Group_Bkey = o.Group_Bkey
+			WHERE o.Level2Name LIKE @p1
 			ORDER BY g.GroupName`
 	case "level3name":
 		query = `
 			SELECT DISTINCT g.Group_Bkey, g.GroupName, 'level3name' as MatchedOn
 			FROM dim.[Group] g
-			WHERE g.level3name LIKE @p1
+			INNER JOIN dim.[Object] o ON g.Group_Bkey = o.Group_Bkey
+			WHERE o.Level3Name LIKE @p1
 			ORDER BY g.GroupName`
 	default:
 		return nil, fmt.Errorf("invalid search column: %s", column)

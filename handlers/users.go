@@ -15,6 +15,11 @@ type UpdateUserRequest struct {
 }
 
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	if h.userRepo == nil {
+		http.Error(w, "Database not connected. Please configure credentials in Settings.", http.StatusServiceUnavailable)
+		return
+	}
+
 	filter := r.URL.Query().Get("filter")
 	sortField := r.URL.Query().Get("sort")
 	sortDir := r.URL.Query().Get("dir")
@@ -30,6 +35,11 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	if h.userRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -53,6 +63,11 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	if h.userRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -80,6 +95,11 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	if h.userRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

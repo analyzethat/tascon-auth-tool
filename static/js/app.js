@@ -262,7 +262,7 @@ async function searchGroups() {
         }
 
         // Filter out groups the user already has
-        const existingBkeys = new Set(accessList.map(a => a.groupBkey));
+        const existingBkeys = new Set((accessList || []).map(a => a.groupBkey));
         const filteredResults = searchResults.filter(r => !existingBkeys.has(r.groupBkey));
 
         if (filteredResults.length === 0) {

@@ -8,6 +8,11 @@ import (
 )
 
 func (h *Handler) SearchGroups(w http.ResponseWriter, r *http.Request) {
+	if h.groupRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	query := r.URL.Query().Get("q")
 	if query == "" {
 		w.Header().Set("Content-Type", "application/json")

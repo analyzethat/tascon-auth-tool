@@ -10,6 +10,8 @@ import (
 type Config struct {
 	Server   string `json:"server"`
 	Database string `json:"database"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func DefaultConfig() *Config {
@@ -33,11 +35,12 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	// Start with defaults, then override with saved values
+	cfg := DefaultConfig()
+	if err := json.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
-	return &cfg, nil
+	return cfg, nil
 }
 
 func (c *Config) Save() error {

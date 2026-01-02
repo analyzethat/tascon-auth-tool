@@ -38,16 +38,16 @@ func NewHandler(
 }
 
 func (h *Handler) IndexPage(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
+	if err := h.templates.ExecuteTemplate(w, "index.html", nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	h.templates.ExecuteTemplate(w, "index.html", nil)
 }
 
 type SettingsPageData struct {
 	Server   string
 	Database string
+	Username string
+	Password string
 	Saved    bool
 }
 
@@ -55,6 +55,8 @@ func (h *Handler) SettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := SettingsPageData{
 		Server:   h.config.Server,
 		Database: h.config.Database,
+		Username: h.config.Username,
+		Password: h.config.Password,
 		Saved:    r.URL.Query().Get("saved") == "1",
 	}
 	h.templates.ExecuteTemplate(w, "settings.html", data)
@@ -68,6 +70,8 @@ func (h *Handler) SaveSettings(w http.ResponseWriter, r *http.Request) {
 
 	h.config.Server = r.FormValue("server")
 	h.config.Database = r.FormValue("database")
+	h.config.Username = r.FormValue("username")
+	h.config.Password = r.FormValue("password")
 
 	if err := h.config.Save(); err != nil {
 		http.Error(w, "Failed to save settings", http.StatusInternalServerError)

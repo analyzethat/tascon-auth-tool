@@ -1,34 +1,62 @@
-{{define "title"}}Instellingen - Power BI Access Management{{end}}
-
-{{define "content"}}
-<div class="settings-page">
-    <h2>Instellingen</h2>
-
-    {{if .Saved}}
-    <div class="alert alert-success">Instellingen opgeslagen. Herstart de applicatie om de nieuwe verbinding te gebruiken.</div>
-    {{end}}
-
-    <form method="POST" action="/settings" class="settings-form">
-        <div class="form-group">
-            <label for="server">Server</label>
-            <input type="text" id="server" name="server" class="input" value="{{.Server}}" placeholder="server.database.windows.net">
-            <small class="text-muted">De Azure SQL server hostnaam</small>
+{{define "settings.html"}}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instellingen - Power BI Access Management</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar-brand">
+            <h1>Power BI Access Management</h1>
         </div>
+        <nav class="navbar-nav">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/settings" class="nav-link">Instellingen</a>
+        </nav>
+    </header>
+    <main class="container">
+        <div class="settings-page">
+            <h2>Instellingen</h2>
 
-        <div class="form-group">
-            <label for="database">Database</label>
-            <input type="text" id="database" name="database" class="input" value="{{.Database}}" placeholder="dwh">
-            <small class="text-muted">De naam van de database</small>
-        </div>
+            {{if .Saved}}
+            <div class="alert alert-success">Instellingen opgeslagen. Herstart de applicatie om de nieuwe verbinding te gebruiken.</div>
+            {{end}}
 
-        <div class="form-actions">
-            <a href="/" class="btn btn-secondary">Terug</a>
-            <button type="submit" class="btn btn-primary">Opslaan</button>
+            <form method="POST" action="/settings" class="settings-form">
+                <div class="form-group">
+                    <label for="server">Server</label>
+                    <input type="text" id="server" name="server" class="input" value="{{.Server}}" placeholder="server.database.windows.net">
+                    <small class="text-muted">De Azure SQL server hostnaam</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="database">Database</label>
+                    <input type="text" id="database" name="database" class="input" value="{{.Database}}" placeholder="dwh">
+                    <small class="text-muted">De naam van de database</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Gebruikersnaam</label>
+                    <input type="text" id="username" name="username" class="input" value="{{.Username}}" placeholder="sql_user">
+                    <small class="text-muted">SQL Server gebruikersnaam</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Wachtwoord</label>
+                    <input type="password" id="password" name="password" class="input" value="{{.Password}}" placeholder="********">
+                    <small class="text-muted">SQL Server wachtwoord</small>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/" class="btn btn-secondary">Terug</a>
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                </div>
+            </form>
         </div>
-    </form>
-</div>
+    </main>
+</body>
+</html>
 {{end}}
-
-{{define "scripts"}}{{end}}
-
-{{template "layout" .}}

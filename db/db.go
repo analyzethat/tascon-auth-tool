@@ -6,22 +6,27 @@ import (
 	"fmt"
 	"net/url"
 
-	_ "github.com/microsoft/go-mssqldb/azuread"
+	_ "github.com/microsoft/go-mssqldb"
 )
 
 type Config struct {
 	Server   string
 	Database string
+	Username string
+	Password string
 }
 
 func Open(cfg Config) (*sql.DB, error) {
 	query := url.Values{}
 	query.Add("database", cfg.Database)
-	query.Add("fedauth", "ActiveDirectoryAzCli")
 
-	connStr := fmt.Sprintf("sqlserver://%s?%s", cfg.Server, query.Encode())
+	connStr := fmt.Sprintf("sqlserver://%s:%s@%s?%s",
+		url.PathEscape(cfg.Username),
+		url.PathEscape(cfg.Password),
+		cfg.Server,
+		query.Encode())
 
-	db, err := sql.Open("azuresql", connStr)
+	db, err := sql.Open("sqlserver", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

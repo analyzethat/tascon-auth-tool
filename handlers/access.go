@@ -11,6 +11,11 @@ type AddAccessRequest struct {
 }
 
 func (h *Handler) ListUserAccess(w http.ResponseWriter, r *http.Request) {
+	if h.accessRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	idStr := r.PathValue("id")
 	userID, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -29,6 +34,11 @@ func (h *Handler) ListUserAccess(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AddUserAccess(w http.ResponseWriter, r *http.Request) {
+	if h.accessRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	idStr := r.PathValue("id")
 	userID, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -67,10 +77,15 @@ func (h *Handler) AddUserAccess(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) RemoveAccess(w http.ResponseWriter, r *http.Request) {
+	if h.accessRepo == nil {
+		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
+		return
+	}
+
 	idStr := r.PathValue("id")
 	accessID, err := strconv.Atoi(idStr)
 	if err != nil {

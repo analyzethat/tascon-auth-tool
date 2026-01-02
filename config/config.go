@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+const encryptedPrefix = "enc:"
 
 type Config struct {
 	Server   string `json:"server"`
@@ -35,11 +38,52 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	// Start with defaults, then override with saved values
-	cfg := DefaultConfig()
-	if err := json.Unmarshal(data, cfg); err != nil {
+	// Parse stored config
+	var stored Config
+	if err := json.Unmarshal(data, &stored); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
+
+	// Start with defaults for non-sensitive fields
+	cfg := DefaultConfig()
+	if stored.Server != "" {
+		cfg.Server = stored.Server
+	}
+	if stored.Database != "" {
+		cfg.Database = stored.Database
+	}
+
+	// Decrypt sensitive fields if master key is available
+	key, hasKey := GetMasterKey()
+
+	// Username
+	if strings.HasPrefix(stored.Username, encryptedPrefix) && hasKey {
+		decrypted, err := Decrypt(strings.TrimPrefix(stored.Username, encryptedPrefix), key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt username: %w", err)
+		}
+		cfg.Username = decrypted
+	} else if strings.HasPrefix(stored.Username, encryptedPrefix) {
+		// Encrypted but no key - leave empty
+		cfg.Username = ""
+	} else {
+		cfg.Username = stored.Username
+	}
+
+	// Password
+	if strings.HasPrefix(stored.Password, encryptedPrefix) && hasKey {
+		decrypted, err := Decrypt(strings.TrimPrefix(stored.Password, encryptedPrefix), key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt password: %w", err)
+		}
+		cfg.Password = decrypted
+	} else if strings.HasPrefix(stored.Password, encryptedPrefix) {
+		// Encrypted but no key - leave empty
+		cfg.Password = ""
+	} else {
+		cfg.Password = stored.Password
+	}
+
 	return cfg, nil
 }
 
@@ -50,16 +94,46 @@ func (c *Config) Save() error {
 	}
 
 	configDir := filepath.Dir(configPath)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	data, err := json.MarshalIndent(c, "", "  ")
+	// Prepare stored config with encrypted fields
+	stored := Config{
+		Server:   c.Server,
+		Database: c.Database,
+	}
+
+	// Encrypt sensitive fields if master key is available
+	key, hasKey := GetMasterKey()
+
+	if hasKey && c.Username != "" {
+		encrypted, err := Encrypt(c.Username, key)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt username: %w", err)
+		}
+		stored.Username = encryptedPrefix + encrypted
+	} else {
+		stored.Username = c.Username
+	}
+
+	if hasKey && c.Password != "" {
+		encrypted, err := Encrypt(c.Password, key)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt password: %w", err)
+		}
+		stored.Password = encryptedPrefix + encrypted
+	} else {
+		stored.Password = c.Password
+	}
+
+	data, err := json.MarshalIndent(stored, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	// Write with restrictive permissions (owner only)
+	if err := os.WriteFile(configPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 	return nil

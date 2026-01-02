@@ -15,6 +15,7 @@
         <nav class="navbar-nav">
             <a href="/" class="nav-link">Home</a>
             <a href="/settings" class="nav-link">Instellingen</a>
+            <a href="/logout" class="nav-link">Uitloggen</a>
         </nav>
     </header>
     <main class="container">
@@ -46,8 +47,14 @@
 
                 <div class="form-group">
                     <label for="password">Wachtwoord</label>
-                    <input type="password" id="password" name="password" class="input" value="{{.Password}}" placeholder="********">
-                    <small class="text-muted">SQL Server wachtwoord</small>
+                    <input type="password" id="password" name="password" class="input" placeholder="{{if .HasPassword}}(ongewijzigd){{else}}Voer wachtwoord in{{end}}">
+                    <small class="text-muted">
+                        {{if .HasPassword}}
+                        Laat leeg om huidige wachtwoord te behouden
+                        {{else}}
+                        SQL Server wachtwoord
+                        {{end}}
+                    </small>
                 </div>
 
                 <div class="form-actions">

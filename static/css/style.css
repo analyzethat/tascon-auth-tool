@@ -451,3 +451,49 @@ body {
     padding: var(--spacing-xl);
     color: var(--text-muted);
 }
+
+/* Login Page */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-color);
+}
+
+.login-card {
+    background: var(--bg-white);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card h1 {
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+    text-align: center;
+}
+
+.login-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.login-form .form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* Alert danger */
+.alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+}

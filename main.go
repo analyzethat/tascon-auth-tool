@@ -18,6 +18,9 @@ import (
 )
 
 func main() {
+	// Log security configuration
+	logSecurityConfig()
+
 	// Load config
 	cfg, err := config.Load()
 	if err != nil {
@@ -67,14 +70,19 @@ func main() {
 	// Setup router
 	router := handlers.SetupRoutes(h)
 
-	// Listen on random port
-	listener, err := net.Listen("tcp", ":0")
+	// Get port from environment (Railway sets PORT) or use random port
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "0"
+	}
+
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	port := listener.Addr().(*net.TCPAddr).Port
+	actualPort := listener.Addr().(*net.TCPAddr).Port
 
-	fmt.Printf("Server running at http://localhost:%d\n", port)
+	fmt.Printf("Server running at http://localhost:%d\n", actualPort)
 
 	// Setup server
 	server := &http.Server{Handler: router}
@@ -94,5 +102,19 @@ func main() {
 	log.Println("Shutting down...")
 	if err := server.Shutdown(context.Background()); err != nil {
 		log.Printf("Error during shutdown: %v", err)
+	}
+}
+
+func logSecurityConfig() {
+	if _, hasKey := config.GetMasterKey(); hasKey {
+		log.Println("Config encryption: ENABLED (POWERBI_MASTER_KEY set)")
+	} else {
+		log.Println("Config encryption: DISABLED (set POWERBI_MASTER_KEY for encryption)")
+	}
+
+	if _, hasPassword := handlers.GetAdminPassword(); hasPassword {
+		log.Println("Authentication: ENABLED (POWERBI_ADMIN_PASSWORD set)")
+	} else {
+		log.Println("Authentication: DISABLED (set POWERBI_ADMIN_PASSWORD to enable)")
 	}
 }

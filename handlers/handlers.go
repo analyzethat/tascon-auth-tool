@@ -44,22 +44,24 @@ func (h *Handler) IndexPage(w http.ResponseWriter, r *http.Request) {
 }
 
 type SettingsPageData struct {
-	Server   string
-	Database string
-	Username string
-	Password string
-	Saved    bool
+	Server      string
+	Database    string
+	Username    string
+	HasPassword bool
+	Saved       bool
 }
 
 func (h *Handler) SettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := SettingsPageData{
-		Server:   h.config.Server,
-		Database: h.config.Database,
-		Username: h.config.Username,
-		Password: h.config.Password,
-		Saved:    r.URL.Query().Get("saved") == "1",
+		Server:      h.config.Server,
+		Database:    h.config.Database,
+		Username:    h.config.Username,
+		HasPassword: h.config.Password != "",
+		Saved:       r.URL.Query().Get("saved") == "1",
 	}
-	h.templates.ExecuteTemplate(w, "settings.html", data)
+	if err := h.templates.ExecuteTemplate(w, "settings.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (h *Handler) SaveSettings(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +73,12 @@ func (h *Handler) SaveSettings(w http.ResponseWriter, r *http.Request) {
 	h.config.Server = r.FormValue("server")
 	h.config.Database = r.FormValue("database")
 	h.config.Username = r.FormValue("username")
-	h.config.Password = r.FormValue("password")
+
+	// Only update password if a new one is provided
+	newPassword := r.FormValue("password")
+	if newPassword != "" {
+		h.config.Password = newPassword
+	}
 
 	if err := h.config.Save(); err != nil {
 		http.Error(w, "Failed to save settings", http.StatusInternalServerError)
@@ -83,6 +90,11 @@ func (h *Handler) SaveSettings(w http.ResponseWriter, r *http.Request) {
 
 func SetupRoutes(h *Handler) http.Handler {
 	mux := http.NewServeMux()
+
+	// Auth routes
+	mux.HandleFunc("GET /login", h.LoginPage)
+	mux.HandleFunc("POST /login", h.Login)
+	mux.HandleFunc("GET /logout", h.Logout)
 
 	// Pages
 	mux.HandleFunc("GET /", h.IndexPage)
@@ -106,5 +118,6 @@ func SetupRoutes(h *Handler) http.Handler {
 	// Static files
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	return mux
+	// Wrap with auth middleware
+	return AuthMiddleware(mux)
 }

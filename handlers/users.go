@@ -15,7 +15,11 @@ type UpdateUserRequest struct {
 }
 
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	if h.userRepo == nil {
+	h.mu.RLock()
+	userRepo := h.userRepo
+	h.mu.RUnlock()
+
+	if userRepo == nil {
 		http.Error(w, "Database not connected. Please configure credentials in Settings.", http.StatusServiceUnavailable)
 		return
 	}
@@ -24,7 +28,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	sortField := r.URL.Query().Get("sort")
 	sortDir := r.URL.Query().Get("dir")
 
-	users, err := h.userRepo.List(r.Context(), filter, sortField, sortDir)
+	users, err := userRepo.List(r.Context(), filter, sortField, sortDir)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -35,7 +39,11 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	if h.userRepo == nil {
+	h.mu.RLock()
+	userRepo := h.userRepo
+	h.mu.RUnlock()
+
+	if userRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -51,7 +59,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.userRepo.Create(r.Context(), req.Email)
+	id, err := userRepo.Create(r.Context(), req.Email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,7 +71,11 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	if h.userRepo == nil {
+	h.mu.RLock()
+	userRepo := h.userRepo
+	h.mu.RUnlock()
+
+	if userRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -86,7 +98,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.userRepo.Update(r.Context(), id, req.Email); err != nil {
+	if err := userRepo.Update(r.Context(), id, req.Email); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -95,7 +107,11 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	if h.userRepo == nil {
+	h.mu.RLock()
+	userRepo := h.userRepo
+	h.mu.RUnlock()
+
+	if userRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -107,7 +123,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.userRepo.Delete(r.Context(), id); err != nil {
+	if err := userRepo.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

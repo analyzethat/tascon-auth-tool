@@ -8,7 +8,11 @@ import (
 )
 
 func (h *Handler) SearchGroups(w http.ResponseWriter, r *http.Request) {
-	if h.groupRepo == nil {
+	h.mu.RLock()
+	groupRepo := h.groupRepo
+	h.mu.RUnlock()
+
+	if groupRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -20,7 +24,7 @@ func (h *Handler) SearchGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := h.groupRepo.Search(r.Context(), query)
+	results, err := groupRepo.Search(r.Context(), query)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

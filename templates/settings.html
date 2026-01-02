@@ -23,7 +23,13 @@
             <h2>Instellingen</h2>
 
             {{if .Saved}}
-            <div class="alert alert-success">Instellingen opgeslagen. Herstart de applicatie om de nieuwe verbinding te gebruiken.</div>
+            {{if .Error}}
+            <div class="alert alert-danger">Instellingen opgeslagen, maar verbinding mislukt. Controleer de gegevens.</div>
+            {{else if .Connected}}
+            <div class="alert alert-success">Instellingen opgeslagen en verbinding geslaagd.</div>
+            {{else}}
+            <div class="alert alert-success">Instellingen opgeslagen.</div>
+            {{end}}
             {{end}}
 
             <form method="POST" action="/settings" class="settings-form">

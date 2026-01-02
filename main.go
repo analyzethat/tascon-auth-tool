@@ -62,7 +62,7 @@ func main() {
 	}
 
 	// Setup handlers
-	h, err := handlers.NewHandler(userRepo, accessRepo, groupRepo, cfg)
+	h, err := handlers.NewHandler(database, userRepo, accessRepo, groupRepo, cfg)
 	if err != nil {
 		log.Fatalf("Failed to setup handlers: %v", err)
 	}

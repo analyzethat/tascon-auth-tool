@@ -1,15 +1,21 @@
 package handlers
 
 import (
+	"database/sql"
 	"html/template"
+	"log"
 	"net/http"
 	"path/filepath"
+	"sync"
 
 	"powerbi-access-tool/config"
+	"powerbi-access-tool/db"
 	"powerbi-access-tool/repository"
 )
 
 type Handler struct {
+	mu         sync.RWMutex
+	database   *sql.DB
 	userRepo   *repository.UserRepository
 	accessRepo *repository.AccessRepository
 	groupRepo  *repository.GroupRepository
@@ -18,6 +24,7 @@ type Handler struct {
 }
 
 func NewHandler(
+	database *sql.DB,
 	userRepo *repository.UserRepository,
 	accessRepo *repository.AccessRepository,
 	groupRepo *repository.GroupRepository,
@@ -29,12 +36,54 @@ func NewHandler(
 	}
 
 	return &Handler{
+		database:   database,
 		userRepo:   userRepo,
 		accessRepo: accessRepo,
 		groupRepo:  groupRepo,
 		templates:  tmpl,
 		config:     cfg,
 	}, nil
+}
+
+// reconnectDatabase closes the old connection and creates a new one
+func (h *Handler) reconnectDatabase() error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	// Close existing connection if any
+	if h.database != nil {
+		h.database.Close()
+		h.database = nil
+		h.userRepo = nil
+		h.accessRepo = nil
+		h.groupRepo = nil
+	}
+
+	// Only connect if credentials are configured
+	if h.config.Username == "" || h.config.Password == "" {
+		return nil
+	}
+
+	log.Printf("Reconnecting to database %s on %s...", h.config.Database, h.config.Server)
+
+	database, err := db.Open(db.Config{
+		Server:   h.config.Server,
+		Database: h.config.Database,
+		Username: h.config.Username,
+		Password: h.config.Password,
+	})
+	if err != nil {
+		log.Printf("Failed to connect to database: %v", err)
+		return err
+	}
+
+	h.database = database
+	h.userRepo = repository.NewUserRepository(database)
+	h.accessRepo = repository.NewAccessRepository(database)
+	h.groupRepo = repository.NewGroupRepository(database)
+
+	log.Println("Connected to database successfully")
+	return nil
 }
 
 func (h *Handler) IndexPage(w http.ResponseWriter, r *http.Request) {
@@ -49,15 +98,23 @@ type SettingsPageData struct {
 	Username    string
 	HasPassword bool
 	Saved       bool
+	Connected   bool
+	Error       string
 }
 
 func (h *Handler) SettingsPage(w http.ResponseWriter, r *http.Request) {
+	h.mu.RLock()
+	connected := h.database != nil
+	h.mu.RUnlock()
+
 	data := SettingsPageData{
 		Server:      h.config.Server,
 		Database:    h.config.Database,
 		Username:    h.config.Username,
 		HasPassword: h.config.Password != "",
 		Saved:       r.URL.Query().Get("saved") == "1",
+		Connected:   connected,
+		Error:       r.URL.Query().Get("error"),
 	}
 	if err := h.templates.ExecuteTemplate(w, "settings.html", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -82,6 +139,12 @@ func (h *Handler) SaveSettings(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.config.Save(); err != nil {
 		http.Error(w, "Failed to save settings", http.StatusInternalServerError)
+		return
+	}
+
+	// Try to reconnect to database with new settings
+	if err := h.reconnectDatabase(); err != nil {
+		http.Redirect(w, r, "/settings?saved=1&error=connection", http.StatusSeeOther)
 		return
 	}
 

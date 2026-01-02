@@ -11,7 +11,11 @@ type AddAccessRequest struct {
 }
 
 func (h *Handler) ListUserAccess(w http.ResponseWriter, r *http.Request) {
-	if h.accessRepo == nil {
+	h.mu.RLock()
+	accessRepo := h.accessRepo
+	h.mu.RUnlock()
+
+	if accessRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -23,7 +27,7 @@ func (h *Handler) ListUserAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessList, err := h.accessRepo.ListByUser(r.Context(), userID)
+	accessList, err := accessRepo.ListByUser(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,7 +38,11 @@ func (h *Handler) ListUserAccess(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AddUserAccess(w http.ResponseWriter, r *http.Request) {
-	if h.accessRepo == nil {
+	h.mu.RLock()
+	accessRepo := h.accessRepo
+	h.mu.RUnlock()
+
+	if accessRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -60,7 +68,7 @@ func (h *Handler) AddUserAccess(w http.ResponseWriter, r *http.Request) {
 	// Filter out groups the user already has access to
 	var newGroupBkeys []int
 	for _, groupBkey := range req.GroupBkeys {
-		exists, err := h.accessRepo.Exists(r.Context(), userID, groupBkey)
+		exists, err := accessRepo.Exists(r.Context(), userID, groupBkey)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -71,7 +79,7 @@ func (h *Handler) AddUserAccess(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(newGroupBkeys) > 0 {
-		if err := h.accessRepo.AddGroups(r.Context(), userID, newGroupBkeys); err != nil {
+		if err := accessRepo.AddGroups(r.Context(), userID, newGroupBkeys); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -81,7 +89,11 @@ func (h *Handler) AddUserAccess(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RemoveAccess(w http.ResponseWriter, r *http.Request) {
-	if h.accessRepo == nil {
+	h.mu.RLock()
+	accessRepo := h.accessRepo
+	h.mu.RUnlock()
+
+	if accessRepo == nil {
 		http.Error(w, "Database not connected", http.StatusServiceUnavailable)
 		return
 	}
@@ -93,7 +105,7 @@ func (h *Handler) RemoveAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.accessRepo.Remove(r.Context(), accessID); err != nil {
+	if err := accessRepo.Remove(r.Context(), accessID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
